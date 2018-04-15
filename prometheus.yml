@@ -1,0 +1,11 @@
+global:
+  scrape_interval:     30s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 30s # By default, scrape targets every 15 seconds.
+
+rule_files:
+  - /etc/prometheus/rules/*.rules
+
+scrape_configs:
+  - job_name: 'tokenexporter'
+    static_configs:
+      - targets: ['tokenexporter:9021']
