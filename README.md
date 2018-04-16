@@ -1,5 +1,5 @@
 # TOKENexporter
-A lightweight server to record ERC20 Token wallet balances for your Prometheus database. TOKENexporter attaches to a geth server to fetch token wallet balances for your Grafana dashboards.
+A lightweight server to record ERC20 Token wallet balances for your Prometheus database. TOKENexporter attaches to a geth server to fetch token wallet balances for your Grafana dashboards. You can also use [BTCexporter](https://github.com/hunterlong/btcexporter) for Bitcoin balances and [ETHexporter](https://github.com/hunterlong/ethexporter) for Ethereum balances.
 
 ## Watch Addresses
 The `addresses.txt` file holds all the addresses to fetch balances for. Use the format `name:address` on each new line.
