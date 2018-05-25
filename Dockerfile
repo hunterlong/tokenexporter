@@ -12,4 +12,6 @@ WORKDIR /app
 ADD addresses.txt /app
 ADD tokens-list.json /app
 
+EXPOSE 9021
+
 ENTRYPOINT /go/bin/tokenexporter
