@@ -40,8 +40,8 @@ func ConnectionToGeth(url string) error {
 	return err
 }
 
-func tokenCaller(address common.Address) (*TokenCaller, error) {
-	caller, err := NewTokenCaller(address, eth)
+func tokenCaller(address common.Address) (*MainCaller, error) {
+	caller, err := NewMainCaller(address, eth)
 	if err != nil {
 		return nil, err
 	}
