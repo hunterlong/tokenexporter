@@ -28,6 +28,7 @@ type Watching struct {
 	Name    string
 	Address string
 	Balance string
+	Host    string
 }
 
 var tokenList []TokenList
@@ -142,6 +143,7 @@ func OpenAddresses(filename string) error {
 			w := &Watching{
 				Name:    object[0],
 				Address: object[1],
+				Host: object[2],
 			}
 			allWatching = append(allWatching, w)
 		}
@@ -205,7 +207,7 @@ func main() {
 					go func(i int, tk TokenList, v *Watching, wg *sync.WaitGroup) {
 						guard <- struct{}{}
 						balance := GetTokenBalance(tk.Address, v.Address, tk.Decimal)
-						data := fmt.Sprintf("token_balance{name=\"%v\",symbol=\"%v\",contract=\"%v\",address=\"%v\"} %v", v.Name, tk.Symbol, tk.Address, v.Address, balance)
+						data := fmt.Sprintf("token_balance{host=\"%v\",name=\"%v\",symbol=\"%v\",contract=\"%v\",address=\"%v\"} %v", v.Host, v.Name, tk.Symbol, tk.Address, v.Address, balance)
 						order := Order{i, data}
 						pendingData = append(pendingData, order)
 						<-guard
