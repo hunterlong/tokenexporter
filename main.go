@@ -224,7 +224,7 @@ func main() {
 			pendingText = append(pendingText, data)
 			outData = pendingText
 			fmt.Printf("Token balance queries completed in %f seconds\n", diff.Seconds())
-			time.Sleep(15 * time.Second)
+			time.Sleep(600 * time.Second)
 		}
 	}()
 
