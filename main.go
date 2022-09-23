@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"os"
 	"strings"
+    "strconv"
 	"time"
 	"io/ioutil"
 	"encoding/json"
 	"sync"
-	"bytes"
 	"sort"
 )
 
@@ -54,7 +54,7 @@ func tokenCaller(address common.Address) (*MainCaller, error) {
 func GetTokenBalance(token, address string, decimals int) string {
 	caller, _ := tokenCaller(common.HexToAddress(token))
 	balance, _ := caller.BalanceOf(nil, common.HexToAddress(address))
-	corrected := BigIntDecimal(balance, decimals)
+	corrected := ToDecimals(balance, decimals)
 	return corrected
 }
 
@@ -89,37 +89,32 @@ func Resort(o []Order) []Order {
 	return newOrder
 }
 
+func exp_func(x int, y int64) (value *big.Int) {
 
-func BigIntDecimal(balance *big.Int, decimals int) string {
-	if balance.String()=="0" {
-		return "0"
-	}
-	var newNum string
-	for k, v := range balance.String() {
-		if k==len(balance.String())-decimals {
-			newNum += "."
-		}
-		newNum += string(v)
-	}
-	stringBytes := bytes.TrimRight([]byte(newNum), "0")
-	newNum = string(stringBytes)
-	if stringBytes[len(stringBytes)-1] == 46 {
-		newNum += "0"
-	}
-	if stringBytes[0] == 46 {
-		newNum = "0"+newNum
-	}
-	return newNum
+    exp:=strconv.FormatInt(y, 2)
+    v := big.NewInt(int64(x))
+    for i := 1; i < len(exp); i++ {
+        v.Mul(v, v)
+            if(exp[i]=='1') {
+            v.Mul(v, big.NewInt(int64(x)))
+        }
+    }
+    return v
 }
-
-
 //
-// CONVERTS WEI TO ETH
-func ToEther(o *big.Int) *big.Float {
+// CONVERT USING THE DECIMALS
+func ToDecimals(o *big.Int, decimals int) string{
+    if o.String()=="0" {
+        return "0"
+    }
 	pul, int := big.NewFloat(0), big.NewFloat(0)
 	int.SetInt(o)
-	pul.Mul(big.NewFloat(0.000000000000000001), int)
-	return pul
+    bigDec := exp_func(10, int64(decimals))
+    fDec := new(big.Float).SetInt(bigDec)
+	pul = new(big.Float).Quo(int, fDec)
+	fmt.Printf("pul  %f \n", pul)
+    result := pul.String()
+	return result
 }
 
 //
