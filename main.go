@@ -112,9 +112,9 @@ func ToDecimals(o *big.Int, decimals int) string{
     bigDec := exp_func(10, int64(decimals))
     fDec := new(big.Float).SetInt(bigDec)
 	pul = new(big.Float).Quo(int, fDec)
-	fmt.Printf("pul  %f \n", pul)
-    result := pul.String()
-	return result
+    result, _ := big.NewFloat(0).SetString(pul.String())
+    text := fmt.Sprintf(result.Text('f', decimals))
+	return text
 }
 
 //
