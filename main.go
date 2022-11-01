@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"os"
 	"strings"
+    "strconv"
 	"time"
 	"io/ioutil"
 	"encoding/json"
 	"sync"
-	"bytes"
 	"sort"
 )
 
@@ -28,6 +28,7 @@ type Watching struct {
 	Name    string
 	Address string
 	Balance string
+	Host    string
 }
 
 var tokenList []TokenList
@@ -40,8 +41,8 @@ func ConnectionToGeth(url string) error {
 	return err
 }
 
-func tokenCaller(address common.Address) (*TokenCaller, error) {
-	caller, err := NewTokenCaller(address, eth)
+func tokenCaller(address common.Address) (*MainCaller, error) {
+	caller, err := NewMainCaller(address, eth)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func tokenCaller(address common.Address) (*TokenCaller, error) {
 func GetTokenBalance(token, address string, decimals int) string {
 	caller, _ := tokenCaller(common.HexToAddress(token))
 	balance, _ := caller.BalanceOf(nil, common.HexToAddress(address))
-	corrected := BigIntDecimal(balance, decimals)
+	corrected := ToDecimals(balance, decimals)
 	return corrected
 }
 
@@ -88,37 +89,32 @@ func Resort(o []Order) []Order {
 	return newOrder
 }
 
+func exp_func(x int, y int64) (value *big.Int) {
 
-func BigIntDecimal(balance *big.Int, decimals int) string {
-	if balance.String()=="0" {
-		return "0"
-	}
-	var newNum string
-	for k, v := range balance.String() {
-		if k==len(balance.String())-decimals {
-			newNum += "."
-		}
-		newNum += string(v)
-	}
-	stringBytes := bytes.TrimRight([]byte(newNum), "0")
-	newNum = string(stringBytes)
-	if stringBytes[len(stringBytes)-1] == 46 {
-		newNum += "0"
-	}
-	if stringBytes[0] == 46 {
-		newNum = "0"+newNum
-	}
-	return newNum
+    exp:=strconv.FormatInt(y, 2)
+    v := big.NewInt(int64(x))
+    for i := 1; i < len(exp); i++ {
+        v.Mul(v, v)
+            if(exp[i]=='1') {
+            v.Mul(v, big.NewInt(int64(x)))
+        }
+    }
+    return v
 }
-
-
 //
-// CONVERTS WEI TO ETH
-func ToEther(o *big.Int) *big.Float {
+// CONVERT USING THE DECIMALS
+func ToDecimals(o *big.Int, decimals int) string{
+    if o.String()=="0" {
+        return "0"
+    }
 	pul, int := big.NewFloat(0), big.NewFloat(0)
 	int.SetInt(o)
-	pul.Mul(big.NewFloat(0.000000000000000001), int)
-	return pul
+    bigDec := exp_func(10, int64(decimals))
+    fDec := new(big.Float).SetInt(bigDec)
+	pul = new(big.Float).Quo(int, fDec)
+    result, _ := big.NewFloat(0).SetString(pul.String())
+    text := fmt.Sprintf(result.Text('f', decimals))
+	return text
 }
 
 //
@@ -142,6 +138,7 @@ func OpenAddresses(filename string) error {
 			w := &Watching{
 				Name:    object[0],
 				Address: object[1],
+				Host: object[2],
 			}
 			allWatching = append(allWatching, w)
 		}
@@ -205,7 +202,7 @@ func main() {
 					go func(i int, tk TokenList, v *Watching, wg *sync.WaitGroup) {
 						guard <- struct{}{}
 						balance := GetTokenBalance(tk.Address, v.Address, tk.Decimal)
-						data := fmt.Sprintf("token_balance{name=\"%v\",symbol=\"%v\",contract=\"%v\",address=\"%v\"} %v", v.Name, tk.Symbol, tk.Address, v.Address, balance)
+						data := fmt.Sprintf("token_balance{host=\"%v\",name=\"%v\",symbol=\"%v\",contract=\"%v\",address=\"%v\"} %v", v.Host, v.Name, tk.Symbol, tk.Address, v.Address, balance)
 						order := Order{i, data}
 						pendingData = append(pendingData, order)
 						<-guard
@@ -224,7 +221,7 @@ func main() {
 			pendingText = append(pendingText, data)
 			outData = pendingText
 			fmt.Printf("Token balance queries completed in %f seconds\n", diff.Seconds())
-			time.Sleep(15 * time.Second)
+			time.Sleep(600 * time.Second)
 		}
 	}()
 
